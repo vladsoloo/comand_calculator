@@ -11,7 +11,7 @@ TOKEN = os.getenv("TOKEN")
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Приветственное сообщение
+
 @dp.message(Command('start'))
 async def cmd_start(message: types.Message):
     user_name = message.from_user.first_name
@@ -26,7 +26,7 @@ async def cmd_start(message: types.Message):
     )
     await message.answer(welcome_text)
 
-# Обработка математических выражений
+
 @dp.message()
 async def calculate(message: Message):
     try:

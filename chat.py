@@ -26,32 +26,22 @@ def run_bot():
         logger.error("Токен бота не найден! Проверьте файл .env")
         exit(1)
 
-
-    # Приветственное сообщение
     @dp.message(Command('start'))
     async def cmd_start(message: types.Message):
         try:
             user_name = message.from_user.first_name
             user_id = message.from_user.id
             logger.info(f"Пользователь {user_name} (ID: {user_id}) запустил бота")
-=======
 
-  @dp.message(Command('start'))
-  async def cmd_start(message: types.Message):
-      try:
-          user_name = message.from_user.first_name
-          user_id = message.from_user.id
-          logger.info(f"Пользователь {user_name} (ID: {user_id}) запустил бота")
-
-          welcome_text = (
-              f"🔢 Привет, {user_name}! Я — бот-калькулятор. 🧮\n\n"
-              "Просто напиши мне математическое выражение (например, '2+2', '5*3' или '10/2'), "
-              "и я мгновенно решу его! 😊\n\n"
-          )
-          await message.answer(welcome_text)
-      except Exception as e:
-          logger.error(f"Ошибка в команде start: {e}", exc_info=True)
-          await message.answer("❌ Произошла ошибка при обработке команды")
+            welcome_text = (
+                f"🔢 Привет, {user_name}! Я — бот-калькулятор. 🧮\n\n"
+                "Просто напиши мне математическое выражение (например, '2+2', '5*3' или '10/2'), "
+                "и я мгновенно решу его! 😊\n\n"
+            )
+            await message.answer(welcome_text)
+        except Exception as e:
+            logger.error(f"Ошибка в команде start: {e}", exc_info=True)
+            await message.answer("❌ Произошла ошибка при обработке команды")
 
 
   @dp.message()

@@ -7,7 +7,6 @@ from dotenv import find_dotenv, load_dotenv
 
 
 def run_bot():
-    # Настройка логгирования
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -18,7 +17,6 @@ def run_bot():
     )
     logger = logging.getLogger(__name__)
 
-    # Загрузка токена из .env
     load_dotenv(find_dotenv())
     TOKEN = os.getenv("TOKEN")
 

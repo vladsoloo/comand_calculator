@@ -1,15 +1,12 @@
-import os
-from aiogram import Dispatcher, types, F
-from aiogram.filters import Command
+from aiogram import Dispatcher, Router, html, types, F
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from keyboard import get_function_keyboard, get_answer_after_primer
 from loguru import logger
-from dotenv import load_dotenv, find_dotenv
 
-load_dotenv(find_dotenv())
-TOKEN = os.getenv("TOKEN")
+chat_router = Router()
 
 
 class Form(StatesGroup):
@@ -17,14 +14,14 @@ class Form(StatesGroup):
     second_number = State()
 
 
-def numbers(dp: Dispatcher):
-    @dp.message(Command('start'))
-    async def cmd_start(message: types.Message, state: FSMContext):
-        await state.set_state(Form.first_number)
-        await message.answer("Здравствуйте, добро пожаловать в калькулятор!")
-        await message.answer("Введите первое число")
+@chat_router.message(CommandStart())
+async def start_cmd(message: types.Message, state: FSMContext):
+    await state.set_state(Form.first_number)
+    logger.info(f'Пользователь {(message.from_user.full_name)}, запустил бота')
+    await message.answer(f"Здравствуйте, {(message.from_user.full_name)},\
+        введите первое число)")
 
-    @dp.message(Form.first_number)
+    @chat_router.message(Form.first_number)
     async def process_first_number(message: types.Message, state: FSMContext):
         try:
             number = int(message.text)
@@ -34,7 +31,7 @@ def numbers(dp: Dispatcher):
         except ValueError:
             await message.answer("Пожалуйста, введите корректное число (целое).")
 
-    @dp.message(Form.second_number)
+    @chat_router.message(Form.second_number)
     async def process_second_number(message: types.Message, state: FSMContext):
         try:
             number = int(message.text)
@@ -51,7 +48,7 @@ def numbers(dp: Dispatcher):
 
     # --- Операции ---
 
-    @dp.message(F.text == "Сложение➕")
+    @chat_router.message(F.text == "Сложение➕")
     async def handle_addition(message: types.Message, state: FSMContext):
         data = await state.get_data()
 
@@ -65,7 +62,7 @@ def numbers(dp: Dispatcher):
 
         await message.answer(f"Результат сложения {first} + {second} = {result}", reply_markup=get_answer_after_primer())
 
-    @dp.message(F.text == "Вычитание➖")
+    @chat_router.message(F.text == "Вычитание➖")
     async def handle_subtraction(message: types.Message, state: FSMContext):
         data = await state.get_data()
 
@@ -79,7 +76,7 @@ def numbers(dp: Dispatcher):
 
         await message.answer(f"Результат вычитания {first} - {second} = {result}", reply_markup=get_answer_after_primer())
 
-    @dp.message(F.text == "Умножение✖️")
+    @chat_router.message(F.text == "Умножение✖️")
     async def handle_multiplication(message: types.Message, state: FSMContext):
         data = await state.get_data()
 
@@ -93,7 +90,7 @@ def numbers(dp: Dispatcher):
 
         await message.answer(f"Результат умножения {first} × {second} = {result}", reply_markup=get_answer_after_primer())
 
-    @dp.message(F.text == "Деление➗")
+    @chat_router.message(F.text == "Деление➗")
     async def handle_division(message: types.Message, state: FSMContext):
         data = await state.get_data()
 
@@ -113,7 +110,7 @@ def numbers(dp: Dispatcher):
 
     # --- Логика продолжения ---
 
-    @dp.message(F.text.in_({"Да✔", "Нет❌"}))
+    @chat_router.message(F.text.in_({"Да✔", "Нет❌"}))
     async def handle_continue_choice(message: types.Message, state: FSMContext):
         if message.text == "Да✔":
             await state.set_state(Form.first_number)

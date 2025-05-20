@@ -4,7 +4,6 @@ from loguru import logger
 from dotenv import load_dotenv, find_dotenv
 from aiogram import Bot, Dispatcher
 
-dp = Dispatcher()
 
 load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")

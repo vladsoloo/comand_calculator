@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def get_function_keyboard() -> ReplyKeyboardMarkup:
     try:
         buttons = [
@@ -15,6 +16,7 @@ def get_function_keyboard() -> ReplyKeyboardMarkup:
     except Exception as e:
         logger.error(f"Ошибка при создании клавиатуры операций: {e}", exc_info=True)
         raise
+
 
 def get_answer_after_primer() -> ReplyKeyboardMarkup:
     try:

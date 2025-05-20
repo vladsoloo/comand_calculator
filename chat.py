@@ -26,6 +26,31 @@ def run_bot():
         logger.error("Токен бота не найден! Проверьте файл .env")
         exit(1)
 
+@dp.message(Command('start'))
+async def cmd_start(message: types.Message):
+    user_name = message.from_user.first_name
+    welcome_text = (
+        f"🔢 Привет, {user_name}! Я — бот-калькулятор. 🧮\n\n"
+        "Просто напиши мне математическое выражение \
+        (например, '2+2', '5*3' или '10/2'), "
+        "и я мгновенно решу его! 😊\n\n"
+    )
+    await message.answer(welcome_text)
+
+
+@dp.message()
+async def calculate(message: Message):
+    try:
+        expression = message.text
+        expression = expression.replace("^", "**")  # Поддержка степеней
+        result = eval(expression)  # Вычисление (опасно без валидации!)
+        await message.answer(f"✅ Результат: {result}")
+    except ZeroDivisionError:
+        await message.answer("❌ Ошибка: деление на ноль!")
+    except Exception:
+        await message.answer("❌ Ошибка: некорректный ввод. \
+                             Пример: '2+2' или '5*3'")
+=======
     @dp.message(Command('start'))
     async def cmd_start(message: types.Message):
         try:
@@ -103,3 +128,4 @@ def run_bot():
 # Чтобы запустить бота при вызове скрипта
 if __name__ == '__main__':
     run_bot()
+

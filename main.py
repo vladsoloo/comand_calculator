@@ -1,4 +1,15 @@
-def main():
+import asyncio
+import os
+from loguru import logger
+from dotenv import load_dotenv, find_dotenv
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from chat import run_bot
+
+load_dotenv(find_dotenv())
+TOKEN = os.getenv("TOKEN")
+
+def main0():
     print("Простой калькулятор")
     print("Доступные операции: +, -, *, /")
 
@@ -24,8 +35,6 @@ def main():
                 print("Ошибка: Неверный оператор!")
                 continue
 
-            print(f"Результат: {num1} {operator} {num2} = {result}")
-
             again = input("Хотите выполнить еще одно вычисление? (да/нет): ")
             if again.lower() != 'да':
                 print("Спасибо за использование калькулятора!")
@@ -36,5 +45,27 @@ def main():
             continue
 
 
-if __name__ == 'main':
-    main()
+if __name__ == 'main0':
+    main0()
+
+async def main1():
+    logger.add("file.log",
+               format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}",
+               rotation="3 days",
+               backtrace=True,
+               diagnose=True)
+    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+    dp = Dispatcher()
+
+    logger.info("Бот запущен")
+    try:
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
+        logger.info("Бот остановлен")
+
+    run_bot()
+
+
+if __name__ == '__main1__':
+    asyncio.run(main1())

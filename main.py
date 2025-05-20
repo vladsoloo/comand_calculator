@@ -17,6 +17,7 @@ async def main() -> None:
                backtrace=True,
                diagnose=True)
     bot = Bot(token=os.getenv('TOKEN'))
+    dp = Dispatcher()
     try:
         await dp.start_polling(bot)
     finally:

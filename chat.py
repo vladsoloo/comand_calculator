@@ -1,131 +1,117 @@
-import os
-import logging
-from aiogram import Bot, Dispatcher, types
+from aiogram import Dispatcher, types, F
 from aiogram.filters import Command
-from aiogram.types import Message
-from dotenv import find_dotenv, load_dotenv
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from keyboard import get_function_keyboard, get_answer_after_primer
 
 
-def run_bot():
-    # Настройка логгирования
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.FileHandler("bot.log"),
-            logging.StreamHandler()
-        ]
-    )
-    logger = logging.getLogger(__name__)
-
-    # Загрузка токена из .env
-    load_dotenv(find_dotenv())
-    TOKEN = os.getenv("TOKEN")
-
-    if not TOKEN:
-        logger.error("Токен бота не найден! Проверьте файл .env")
-        exit(1)
-
-@dp.message(Command('start'))
-async def cmd_start(message: types.Message):
-    user_name = message.from_user.first_name
-    welcome_text = (
-        f"🔢 Привет, {user_name}! Я — бот-калькулятор. 🧮\n\n"
-        "Просто напиши мне математическое выражение \
-        (например, '2+2', '5*3' или '10/2'), "
-        "и я мгновенно решу его! 😊\n\n"
-    )
-    await message.answer(welcome_text)
+class Form(StatesGroup):
+    first_number = State()
+    second_number = State()
 
 
-@dp.message()
-async def calculate(message: Message):
-    try:
-        expression = message.text
-        expression = expression.replace("^", "**")  # Поддержка степеней
-        result = eval(expression)  # Вычисление (опасно без валидации!)
-        await message.answer(f"✅ Результат: {result}")
-    except ZeroDivisionError:
-        await message.answer("❌ Ошибка: деление на ноль!")
-    except Exception:
-        await message.answer("❌ Ошибка: некорректный ввод. \
-                             Пример: '2+2' или '5*3'")
-=======
+def numbers(dp: Dispatcher):
     @dp.message(Command('start'))
-    async def cmd_start(message: types.Message):
+    async def cmd_start(message: types.Message, state: FSMContext):
+        await state.set_state(Form.first_number)
+        await message.answer("Здравствуйте, добро пожаловать в калькулятор!")
+        await message.answer("Введите первое число")
+
+    @dp.message(Form.first_number)
+    async def process_first_number(message: types.Message, state: FSMContext):
         try:
-            user_name = message.from_user.first_name
-            user_id = message.from_user.id
-            logger.info(f"Пользователь {user_name} (ID: {user_id}) запустил бота")
+            number = int(message.text)
+            await state.update_data(first_number=number)
+            await state.set_state(Form.second_number)
+            await message.answer(f"Ваше первое число {number}. Введите второе число")
+        except ValueError:
+            await message.answer("Пожалуйста, введите корректное число (целое).")
 
-            welcome_text = (
-                f"🔢 Привет, {user_name}! Я — бот-калькулятор. 🧮\n\n"
-                "Просто напиши мне математическое выражение (например, '2+2', '5*3' или '10/2'), "
-                "и я мгновенно решу его! 😊\n\n"
-            )
-            await message.answer(welcome_text)
-        except Exception as e:
-            logger.error(f"Ошибка в команде start: {e}", exc_info=True)
-            await message.answer("❌ Произошла ошибка при обработке команды")
-
-
-  @dp.message()
-  async def calculate(message: Message):
-      try:
-          user_id = message.from_user.id
-          expression = message.text
-          logger.info(f"Пользователь {user_id} отправил выражение: {expression}")
-
-          expression = expression.replace("^", "**")  # Поддержка степеней
-          result = eval(expression)  # Вычисление (опасно без валидации!)
-
-          logger.info(f"Вычислено выражение: {expression} = {result}")
-          await message.answer(f"✅ Результат: {result}")
-
-      except ZeroDivisionError:
-          logger.warning(f"Попытка деления на ноль: {expression} (пользователь {user_id})")
-          await message.answer("❌ Ошибка: деление на ноль!")
-      except Exception as e:
-          logger.error(f"Ошибка вычисления: {expression} (пользователь {user_id}): {e}")
-          await message.answer("❌ Ошибка: некорректный ввод. Пример: '2+2' или '5*3'")
-
-            welcome_text = (
-                f"🔢 Привет, {user_name}! Я — бот-калькулятор. 🧮\n\n"
-                "Просто напиши мне математическое выражение (например, '2+2', '5*3' или '10/2'), "
-                "и я мгновенно решу его! 😊\n\n"
-            )
-            await message.answer(welcome_text)
-        except Exception as e:
-            logger.error(f"Ошибка в команде start: {e}", exc_info=True)
-            await message.answer("❌ Произошла ошибка при обработке команды")
-
-    # Обработка математических выражений
-    @dp.message()
-    async def calculate(message: Message):
+    @dp.message(Form.second_number)
+    async def process_second_number(message: types.Message, state: FSMContext):
         try:
-            user_id = message.from_user.id
-            expression = message.text
-            logger.info(f"Пользователь {user_id} отправил выражение: {expression}")
+            number = int(message.text)
+            await state.update_data(second_number=number)
+            data = await state.get_data()
+            first = data['first_number']
+            second = number
+            await message.answer(
+                f"Вы ввели два числа: {first} и {second}\nВыберите действие:",
+                reply_markup=get_function_keyboard()
+            )
+        except ValueError:
+            await message.answer("Пожалуйста, введите корректное число (целое).")
 
-            expression = expression.replace("^", "**")  # Поддержка степеней
-            result = eval(expression)  # Вычисление (опасно без валидации!)
+    # --- Операции ---
 
-            logger.info(f"Вычислено выражение: {expression} = {result}")
-            await message.answer(f"✅ Результат: {result}")
+    @dp.message(F.text == "Сложение➕")
+    async def handle_addition(message: types.Message, state: FSMContext):
+        data = await state.get_data()
 
-        except ZeroDivisionError:
-            logger.warning(f"Попытка деления на ноль: {expression} (пользователь {user_id})")
-            await message.answer("❌ Ошибка: деление на ноль!")
-        except Exception as e:
-            logger.error(f"Ошибка вычисления: {expression} (пользователь {user_id}): {e}")
-            await message.answer("❌ Ошибка: некорректный ввод. Пример: '2+2' или '5*3'")
+        if 'first_number' not in data or 'second_number' not in data:
+            await message.answer("Пожалуйста, сначала введите оба числа.")
+            return
 
-    # Запуск бота
-    logger.info("Бот запущен и готов к работе...")
-    dp.run_polling(bot)
+        first = data['first_number']
+        second = data['second_number']
+        result = first + second
 
+        await message.answer(f"Результат сложения {first} + {second} = {result}", reply_markup=get_answer_after_primer())
 
-# Чтобы запустить бота при вызове скрипта
-if __name__ == '__main__':
-    run_bot()
+    @dp.message(F.text == "Вычитание➖")
+    async def handle_subtraction(message: types.Message, state: FSMContext):
+        data = await state.get_data()
 
+        if 'first_number' not in data or 'second_number' not in data:
+            await message.answer("Пожалуйста, сначала введите оба числа.")
+            return
+
+        first = data['first_number']
+        second = data['second_number']
+        result = first - second
+
+        await message.answer(f"Результат вычитания {first} - {second} = {result}", reply_markup=get_answer_after_primer())
+
+    @dp.message(F.text == "Умножение✖️")
+    async def handle_multiplication(message: types.Message, state: FSMContext):
+        data = await state.get_data()
+
+        if 'first_number' not in data or 'second_number' not in data:
+            await message.answer("Пожалуйста, сначала введите оба числа.")
+            return
+
+        first = data['first_number']
+        second = data['second_number']
+        result = first * second
+
+        await message.answer(f"Результат умножения {first} × {second} = {result}", reply_markup=get_answer_after_primer())
+
+    @dp.message(F.text == "Деление➗")
+    async def handle_division(message: types.Message, state: FSMContext):
+        data = await state.get_data()
+
+        if 'first_number' not in data or 'second_number' not in data:
+            await message.answer("Пожалуйста, сначала введите оба числа.")
+            return
+
+        first = data['first_number']
+        second = data['second_number']
+
+        if second == 0:
+            await message.answer("Ошибка: деление на ноль невозможно!")
+            return
+
+        result = first / second
+        await message.answer(f"Результат деления {first} ÷ {second} = {result}", reply_markup=get_answer_after_primer())
+
+    # --- Логика продолжения ---
+
+    @dp.message(F.text.in_({"Да✔", "Нет❌"}))
+    async def handle_continue_choice(message: types.Message, state: FSMContext):
+        if message.text == "Да✔":
+            await state.set_state(Form.first_number)
+            await message.answer("Введите первое число:", reply_markup=ReplyKeyboardRemove())
+        else:
+            await message.answer("Спасибо за использование калькулятора! До свидания!", reply_markup=ReplyKeyboardRemove())
+            await state.clear()
